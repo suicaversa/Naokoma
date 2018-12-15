@@ -33,11 +33,12 @@
         },
         generateVoice: function(){
           if(this.text.length < 1) return 
+          var me = this
           axios.get('/speech/' + this.text)
                .then(function(res){
                 console.log('Generate Success')
                 console.log(res)
-                this.speak()
+                me.speak()
                })
                .catch(function(err){
                  console.log('Error')
