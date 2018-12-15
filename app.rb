@@ -8,5 +8,15 @@ get '/' do
 end
 
 get '/hello' do
-  `mplayer output.mp3`
+   audio_file = File.dirname(__FILE__) + '/assets/audio/output.mp3'
+  `mplayer #{audio_file}`
+end
+
+get '/photo' do
+  html = "<img src='/output.jpg'>"
+  html
+end
+
+get '/camera' do
+  `fswebcam public/output.jpg`
 end
