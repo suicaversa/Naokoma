@@ -70,7 +70,7 @@ get '/speech/:text' do
 
   response_json = JSON.parse(response.body)
   audio_data = Base64.decode64(response_json['audioContent'])
-  FIle.open(AUDIO_FILE_PATH, 'w') do |f|
+  File.open(AUDIO_FILE_PATH, 'w') do |f|
     f.puts audio_data
   end
 
