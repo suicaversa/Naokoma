@@ -3,7 +3,12 @@ require 'bundler'
 Bundler.setup(:default, :ci)
 
 require 'sinatra'
-require "google/cloud/text_to_speech/v1"
+require 'net/http'
+require 'uri'
+require 'base64'
+
+TEXT_TO_SPEECH_ENDPOINT = 'https://texttospeech.googleapis.com/v1/text:synthesize'
+AUDIO_FILE_PATH = File.dirname(__FILE__) + '/assets/audio/output.mp3'
 
 helpers do
   def h(text)
@@ -11,12 +16,16 @@ helpers do
   end
 end
 
+def gcloud_token
+  @gcloud_token = `gcloud auth application-default print-access-token`.chomp
+end
+
 get '/' do
   'Put this in your pipe & smoke it!'
 end
 
 get '/hello' do
-   audio_file = File.dirname(__FILE__) + '/assets/audio/output.mp3'
+  audio_file = AUDIO_FILE_PATH
   `mplayer #{audio_file}`
 end
 
@@ -30,13 +39,40 @@ get '/camera' do
 end
 
 get '/speech/:text' do
-  text_to_speech_client = Google::Cloud::TextToSpeech::V1.new
-  input = {text: h(params[:text])}
-  voice = {language_code: "ja-JP"}
-  audio_config = {audio_encoding: Google::Cloud::Texttospeech::V1::AudioEncoding::MP3}
-  response = text_to_speech_client.synthesize_speech input, voice, audio_config
-  File.open File.dirname(__FILE__) + "/assets/audio/output.mp3", "w" do |file|
-    file.write response.audio_content
-  end
-end
+  text = params[:text]
+  body = "{
+    'input':{
+      'text':'#{text}'
+    },
+    'voice':{
+      'languageCode': 'ja-JP',
+      'name': 'ja-JP-Standard-A'
+    },
+    'audioConfig':{
+      'audioEncoding':'MP3'
+    }
+  }"
 
+  uri = URI.parse(TEXT_TO_SPEECH_ENDPOINT)
+  request = Net::HTTP::Post.new(uri)
+  request.content_type = "application/json; charset=utf-8"
+  request["Authorization"] = "Bearer #{gcloud_token}"
+  request["Content-Length"] = body.length.to_s
+  request.body = body
+  
+  req_options = {
+    use_ssl: uri.scheme == "https",
+  }
+  
+  response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+    http.request(request)
+  end
+
+  response_json = JSON.parse(response.body)
+  audio_data = Base64.decode64(response_json['audioContent'])
+  FIle.open(AUDIO_FILE_PATH, 'w') do |f|
+    f.puts audio_data
+  end
+
+  true
+end
