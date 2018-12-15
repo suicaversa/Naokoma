@@ -8,7 +8,7 @@ require 'uri'
 require 'base64'
 
 TEXT_TO_SPEECH_ENDPOINT = 'https://texttospeech.googleapis.com/v1/text:synthesize'
-AUDIO_FILE_PATH = File.dirname(__FILE__) + '/assets/audio/output.mp3'
+AUDIO_FILE_PATH = File.dirname(__FILE__) + '/assets/audio/output.raw'
 
 helpers do
   def h(text)
@@ -20,13 +20,18 @@ def gcloud_token
   @gcloud_token = `gcloud auth application-default print-access-token`.chomp
 end
 
+def speak
+  audio_file = AUDIO_FILE_PATH
+  `aplay #{audio_file}`
+end
+
 get '/' do
   erb :index
 end
 
 get '/speak' do
   audio_file = AUDIO_FILE_PATH
-  `mplayer #{audio_file}`
+  `aplay #{audio_file}`
 
   { result: 'success' }.to_json
 end
@@ -51,7 +56,7 @@ get '/speech/:text' do
       'name': 'ja-JP-Standard-A'
     },
     'audioConfig':{
-      'audioEncoding':'MP3'
+      'audioEncoding':'LINEAR16'
     }
   }"
 
@@ -80,6 +85,8 @@ get '/speech/:text' do
   File.open(AUDIO_FILE_PATH, 'w') do |f|
     f.puts audio_data
   end
+
+  speak
 
   { result: 'success' }.to_json
 end
