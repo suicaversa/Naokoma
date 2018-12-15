@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Naokoma Console</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.min.js"></script>
+</head>
+<body>
+  <div id="vueApp">
+    <input type="text" v-model='text'>
+    <button @click='generateVoice'>Speak</button>
+  </div>
+  <script>
+    var vm = new Vue({
+      el: '#vueApp',
+      data: {
+        text: ''
+      },
+      methods: {
+        speak: function (){
+          axios.get('/speak')
+               .then(function(res){
+                 console.log('Success')
+                 console.log(res)
+               })
+               .catch(function(err){
+                 console.log('Error')
+                 console.log(err)
+               })
+        },
+        generateVoice: function(){
+          if(this.text.length < 1) return 
+          axios.get('/speech/' + this.text)
+               .then(function(res){
+                console.log('Generate Success')
+                console.log(res)
+                this.speak()
+               })
+               .catch(function(err){
+                 console.log('Error')
+                 console.log(err)
+               })
+        }
+      }
+    })
+  </script>
+</body>
+</html>

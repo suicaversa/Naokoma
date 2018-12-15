@@ -21,12 +21,14 @@ def gcloud_token
 end
 
 get '/' do
-  'Put this in your pipe & smoke it!'
+  erb :index
 end
 
-get '/hello' do
+get '/speak' do
   audio_file = AUDIO_FILE_PATH
   `mplayer #{audio_file}`
+
+  { result: 'success' }.to_json
 end
 
 get '/photo' do
@@ -68,7 +70,10 @@ get '/speech/:text' do
     http.request(request)
   end
 
-  puts response.code
+  if response.code.to_s != '200'
+    status response.code
+    return { result: response.body }.to_json
+  end
 
   response_json = JSON.parse(response.body)
   audio_data = Base64.decode64(response_json['audioContent'])
@@ -76,5 +81,5 @@ get '/speech/:text' do
     f.puts audio_data
   end
 
-  true
+  { result: 'success' }.to_json
 end
